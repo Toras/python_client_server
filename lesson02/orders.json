@@ -1,0 +1,25 @@
+{
+    "orders": [
+        {
+            "item": "phone",
+            "quantity": "3",
+            "price": "4987.34",
+            "buyer": "Jason",
+            "date": "2020-06-01"
+        },
+        {
+            "item": "printer",
+            "quantity": "1",
+            "price": "14500",
+            "buyer": "Олег",
+            "date": "2021-01-01"
+        },
+        {
+            "item": "плакат",
+            "quantity": "1",
+            "price": "700",
+            "buyer": "Владимир",
+            "date": "2020-11-08"
+        }
+    ]
+}
