@@ -1,7 +1,7 @@
 import time
 from socket import socket, AF_INET, SOCK_STREAM
 from sys import argv, exit
-from gb_messenger.utils import actions, get_message, send_message
+from utils import actions, get_message, send_message
 
 
 def action_from_client(msg):
