@@ -1,0 +1,2 @@
+import gb_messenger_logs.configs.server_log_config
+import gb_messenger_logs.configs.client_log_config
