@@ -2,13 +2,14 @@ import logging
 import time
 from socket import socket, AF_INET, SOCK_STREAM
 from sys import argv, exit
-from utils import actions, get_message, send_message
+from utils import actions, get_message, send_message, deco_log
 import gb_messenger_logs.configs.server_log_config
 
 
 log = logging.getLogger('server')
 
 
+@deco_log
 def action_from_client(msg):
     result = {}
     if 'timestamp' in msg and 'action' in msg:
@@ -42,7 +43,6 @@ if __name__ == '__main__':
         if argv.count('-a') != 0:
             server_address = argv[argv.index('-a') + 1]
     except IndexError:
-        # print('Need address after -a')
         log.error('Need address after -a')
         exit(1)
     try:
@@ -51,15 +51,12 @@ if __name__ == '__main__':
             if server_port < 1024 or server_port > 65535:
                 raise ValueError
     except IndexError:
-        # print('Need port number after -p')
         log.error('Need port number after -p')
         exit(1)
     except ValueError:
-        # print('Port must be between 1025 and 65535')
         log.error('Port must be between 1025 and 65535')
         exit(1)
     SERVER_SOCKET.bind((server_address, server_port))
-    # print(f'starting msg server at: {server_address} on: {server_port}')
     log.info(f'starting msg server at: {server_address} on: {server_port}')
     SERVER_SOCKET.listen(5)
 
@@ -70,11 +67,8 @@ if __name__ == '__main__':
             msg_to_client = action_from_client(msg_from_client)
             log.info(f'incoming inquiry from {client_address}, '
                             f'action: {actions[msg_from_client["action"]]}')
-            # print(f'incoming inquiry from {client_address}, '
-            #       f'action: {actions[msg_from_client["action"]]}')
             send_message(CLIENT_SOCKET, msg_to_client, 'utf-8')
             CLIENT_SOCKET.close()
     finally:
         SERVER_SOCKET.close()
-        # print(f'stopped msg server at: {server_address} on: {server_port}')
         log.info(f'stopped msg server at: {server_address} on: {server_port}')
