@@ -11,7 +11,7 @@ log = logging.getLogger('server')
 
 
 @deco_log
-def action_from_client(msg, msgs_list, client_sock):
+def action_from_client(msg, msgs_list, client_sock, clients_list, names_dict):
     log.debug(f'msg from {client_sock}: {msg}')
     result = {}
     if 'timestamp' in msg and 'action' in msg:
@@ -22,10 +22,31 @@ def action_from_client(msg, msgs_list, client_sock):
                     'timestamp': int(time.time()),
                     'alert': 'OK'
                 }
-                send_message(client_sock, result, 'utf-8')
+                if msg['user'] not in names_dict.keys():
+                    names_dict[msg['user']] = client_sock
+                    send_message(client_sock, result, 'utf-8')
+                else:
+                    result = {
+                        'response': 400,
+                        'timestamp': int(time.time()),
+                        'error': 'user name already registered'
+                    }
+                    send_message(client_sock, result, 'utf-8')
+                    clients.remove(client_sock)
+                    client_sock.close()
                 return
             elif msg['action'] == 2:
-                msgs_list.append((msg['user'], msg['message']))
+                msgs_list.append(msg)
+                return
+            elif msg['action'] == 5 and 'user' in msg:
+                print(msg['user'])
+                print(clients_list)
+                print(names_dict)
+                clients_list.remove(client_sock)
+                names_dict[msg['user']].close()
+                del names_dict[msg['user']]
+                print(clients_list)
+                print(names_dict)
                 return
         else:
             result = {
@@ -42,8 +63,16 @@ def action_from_client(msg, msgs_list, client_sock):
     send_message(client_sock, result, 'utf-8')
 
 
-def main_loop():
-    pass
+@deco_log
+def message_to_client(cur_msg, names, send_msg_list):
+    print(cur_msg, names, send_msg_list, sep='\n')
+    if cur_msg['destination'] in names and names[cur_msg['destination']] in send_msg_list:
+        send_message(names[cur_msg['destination']], cur_msg)
+    elif cur_msg['destination'] in names and names[cur_msg['destination']] not in send_msg_list:
+        raise ConnectionError
+    else:
+        log.error(f'user {cur_msg["destination"]} not on server,'
+                  f'can\'t send message.')
 
 
 if __name__ == '__main__':
@@ -72,6 +101,7 @@ if __name__ == '__main__':
     SERVER_SOCKET.settimeout(0.5)
     clients_list = []
     messages_list = []
+    names_dict = {}
     log.info(f'starting msg server at: {server_address} on: {server_port}')
     SERVER_SOCKET.listen(5)
 
@@ -97,25 +127,20 @@ if __name__ == '__main__':
                 for client in rcv_msg_list:
                     try:
                         msg_from_client = get_message(client, 1024, 'utf-8')
-                        action_from_client(msg_from_client, messages_list, client)
-                    except:
+                        action_from_client(msg_from_client, messages_list, client, clients_list, names_dict)
+                    except Exception:
                         log.info(f'Client {client.getpeername()} logged off')
                         clients_list.remove(client)
 
-            if snd_msg_list and messages_list:
-                msg_to_client = {
-                    'action': 2,
-                    'sender': messages_list[0][0],
-                    'timestamp': int(time.time()),
-                    'message': messages_list[0][1]
-                }
-                del messages_list[0]
-                for client in snd_msg_list:
-                    try:
-                        send_message(client, msg_to_client, 'utf-8')
-                    except Exception as e:
-                        log.info(f'Client {client.getpeername()} logged off')
-                        clients_list.remove(client)
+            for message in messages_list:
+                try:
+                    message_to_client(message, names_dict, snd_msg_list)
+                except Exception as e:
+                    log.info(f'Client {message["destination"].getpeername()} logged off')
+                    clients_list.remove(names_dict[message['destination']])
+                    del names_dict[message['destination']]
+            messages_list.clear()
+            # print(names_dict)
     finally:
         SERVER_SOCKET.close()
         log.info(f'stopped msg server at: {server_address} on: {server_port}')

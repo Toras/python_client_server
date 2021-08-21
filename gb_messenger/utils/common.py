@@ -15,7 +15,7 @@ actions = {
 
 
 @deco_log
-def get_message(sock, package_len, enc):
+def get_message(sock, package_len=1024, enc='utf-8'):
     byte_msg = sock.recv(package_len)
     if isinstance(byte_msg, bytes):
         json_msg = byte_msg.decode(enc)
@@ -27,7 +27,7 @@ def get_message(sock, package_len, enc):
 
 
 @deco_log
-def send_message(sock, msg, enc):
+def send_message(sock, msg, enc='utf-8'):
     json_msg = json.dumps(msg)
     byte_msg = json_msg.encode(enc)
     sock.send(byte_msg)
