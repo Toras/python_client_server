@@ -10,7 +10,9 @@ if __name__ == '__main__':
         elif action == 's':
             processes.append(Popen('python server\\server.py', creationflags=CREATE_NEW_CONSOLE))
             for i in range(5):
-                processes.append(Popen('python client\\client.py', creationflags=CREATE_NEW_CONSOLE))
+                processes.append(Popen('python client\\client.py -m listen', creationflags=CREATE_NEW_CONSOLE))
+            for i in range(2):
+                processes.append(Popen('python client\\client.py -m send', creationflags=CREATE_NEW_CONSOLE))
         elif action == 'x':
             while processes:
                 process = processes.pop()

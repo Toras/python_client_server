@@ -1,4 +1,8 @@
 import json
+from utils.decorators import deco_log
+import gb_messenger_logs.configs.client_log_config
+import gb_messenger_logs.configs.server_log_config
+
 
 actions = {
     0: 'presence',
@@ -10,6 +14,7 @@ actions = {
 }
 
 
+@deco_log
 def get_message(sock, package_len, enc):
     byte_msg = sock.recv(package_len)
     if isinstance(byte_msg, bytes):
@@ -21,6 +26,7 @@ def get_message(sock, package_len, enc):
     raise ValueError
 
 
+@deco_log
 def send_message(sock, msg, enc):
     json_msg = json.dumps(msg)
     byte_msg = json_msg.encode(enc)
